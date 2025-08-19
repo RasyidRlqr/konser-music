@@ -1,0 +1,21 @@
+<?php
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+
+public function boot()
+{
+    // Existing boot content...
+public const HOME = '/admin/dashboard';
+    // ⬇ Tambahkan redirect setelah login di bawah sini
+    Route::middleware('web')
+        ->group(function () {
+            // Custom redirect logic after login
+            Route::get('/redirect-after-login', function () {
+                if (Auth::check() && Auth::user()->role === 'admin') {
+                    return redirect('/admin/dashboard');
+                }
+
+                return redirect('/');
+            });
+        });
+}

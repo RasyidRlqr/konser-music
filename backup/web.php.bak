@@ -1,0 +1,54 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Middleware\IsAdmin;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Controllers\Admin\AdmDashboardController;
+
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/kontak', [HomeController::class, 'kontak'])->name('kontak');
+
+
+Route::get('/debug-middleware', function() {
+    dd(
+        app(\Illuminate\Contracts\Http\Kernel::class)->getMiddlewareGroups(),
+        app(\Illuminate\Contracts\Http\Kernel::class)->getRouteMiddleware()
+    );
+})->middleware('web');
+
+
+
+Route::get('/test-middleware', function() {
+    return "Middleware berhasil!";
+})->middleware('is_admin');
+
+
+// Halaman publik konser
+Route::controller(ConcertController::class)->group(function () {
+    Route::get('/konser', 'index')->name('konser');
+    Route::get('/konser/{ticket}', 'show')->name('konser.detail');
+    Route::get('/konser/search', 'search')->name('konser.search');
+});
+
+// Admin routes
+Route::middleware(['auth', 'is_admin'])->prefix('admin')->group(function () {
+    Route::resource('tickets', TicketController::class);
+});
+
+// Group untuk user yang sudah login
+Route::middleware(['auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+
+    // Group untuk admin - HANYA gunakan 'is_admin' saja karena 'auth' sudah di parent group
+    Route::middleware(['auth', IsAdmin::class])->group(function () {
+    Route::get('/admin/dashboard', [AdmDashboardController::class, 'index'])
+         ->name('admin.dashboard');
+});
+});
+
+// Otentikasi Laravel
+require __DIR__.'/auth.php';
